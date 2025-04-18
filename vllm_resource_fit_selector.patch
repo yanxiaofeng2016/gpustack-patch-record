@@ -1,0 +1,61 @@
+--- a/gpustack/policies/candidate_selectors/vllm_resource_fit_selector.py
++++ b/gpustack/policies/candidate_selectors/vllm_resource_fit_selector.py
+@@ -386,26 +386,32 @@ class VLLMResourceFitSelector(ScheduleCandidatesSelector):
+                 allocatable_gpu_memory_utilization = allocatable_vram / gpu.memory.total
+ 
+                 if allocatable_vram > self._largest_single_gpu_vram:
+                     self._largest_single_gpu_vram = allocatable_vram
+                     self._largest_single_gpu_vram_utilization = (
+                         allocatable_gpu_memory_utilization
+                     )
+ 
+                 if gpu.memory is None or gpu.memory.total == 0:
+                     continue
+                 
+-                # 跳过资源检查，仅适用于手动选择GPU模式
++                # 计算VRAM声明
++                vram_claim = (
++                    int(gpu.memory.total * self._gpu_memory_utilization)
++                    if self._gpu_memory_utilization > 0  # LLMs
++                    else int(self._vram_claim)  # non LLMs
++                )
++                
++                # 手动选择GPU模式，不执行资源验证，直接返回候选
+                 if selected_gpu_index:
+-                    vram_claim = (
+-                        int(gpu.memory.total * self._gpu_memory_utilization)
+-                        if self._gpu_memory_utilization > 0  # LLMs
+-                        else int(self._vram_claim)  # non LLMs
+-                    )
+-                    
+                     candidates.append(
+                         ModelInstanceScheduleCandidate(
+                             worker=worker,
+                             gpu_indexes=[gpu_index],
+                             computed_resource_claim=ComputedResourceClaim(
+                                 vram={
+                                     gpu_index: vram_claim,
+                                 },
+                             ),
+                         )
+                     )
+                     return candidates
+ 
+-                # 对于非手动选择，执行资源检查
++                # 非手动选择模式，执行资源检查
+                 if (self._vram_claim > allocatable_vram) or (
+                     self._gpu_memory_utilization > 0
+                     and allocatable_gpu_memory_utilization < self._gpu_memory_utilization
+                 ):
+                     continue
+ 
+-                vram_claim = (
+-                    int(gpu.memory.total * self._gpu_memory_utilization)
+-                    if self._gpu_memory_utilization > 0  # LLMs
+-                    else int(self._vram_claim)  # non LLMs
+-                )
+-
+                 candidates.append(
+                     ModelInstanceScheduleCandidate(
+                         worker=worker,
+                         gpu_indexes=[gpu_index],

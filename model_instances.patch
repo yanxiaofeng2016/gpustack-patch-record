@@ -1,0 +1,46 @@
+--- a/gpustack/routes/model_instances.py
++++ b/gpustack/routes/model_instances.py
+@@ -155,7 +155,7 @@ async def update_model_instance(
+     try:
+         request_dict = request.dict(exclude_unset=True)
+ 
+-        model_instance = await ModelInstanceService(session.session).update(
++        model_instance = await ModelInstanceService(session).update(
+             id=id, request_dict=request_dict
+         )
+ 
+@@ -211,7 +211,7 @@ async def update_state(
+     """
+     Update model instance state.
+     """
+-    model_instance_service = ModelInstanceService(session.session)
++    model_instance_service = ModelInstanceService(session)
+     result = await model_instance_service.update_state_by_id(id=id, state=state)
+     if not result:
+         raise HTTPException(
+@@ -242,7 +242,7 @@ async def update_state_for_ray_actor(
+     """
+     Update model instance state.
+     """
+-    model_instance_service = ModelInstanceService(session.session)
++    model_instance_service = ModelInstanceService(session)
+     result = await model_instance_service.update_state_by_id(
+         id=id, state=state, ray_actor_ip=ray_actor_ip
+     )
+@@ -274,7 +274,7 @@ async def delete_model_instance(
+     """
+     Delete model instance by id.
+     """
+-    model_instance_service = ModelInstanceService(session.session)
++    model_instance_service = ModelInstanceService(session)
+     await model_instance_service.delete_by_id(id=id)
+     return {"success": True}
+ 
+@@ -287,7 +287,7 @@ async def stop_model_instance(
+     """
+     Stop model instance by id.
+     """
+-    model_instance_service = ModelInstanceService(session.session)
++    model_instance_service = ModelInstanceService(session)
+     await model_instance_service.stop_by_id(id=id)
+     return {"success": True}
